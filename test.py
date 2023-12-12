@@ -7,8 +7,17 @@ import datetime
 import requests
 from bs4 import BeautifulSoup
 
+import os
+
 SPOTIFY_URL = "https://open.spotify.com/artist/5K4W6rqBFWDnAN6FQUkS6x"
 KEY_WORDS = ["Album", "Donda"]
+
+DISCORD_WEBHOOK = os.environ.get("DISCORD_WEBHOOK")
+
+
+def post_to_discord():
+    payload = {"content": "Kanye dropped Vultures! @everyone"}
+    requests.post(DISCORD_WEBHOOK, data=payload)
 
 
 async def fetch(url) -> str:
@@ -23,17 +32,21 @@ def check_for_album(soup) -> bool:
     return False
 
 
-def log_check(check) -> None:
+def log_result(album_dropped) -> None:
     print(datetime.datetime.now().time(), end=": ")
-    album_dropped = check()
-    print("Album dropped!" if album_dropped else "No album dropped yet.")
+    print(
+        "VULTURES DROPPED!!!!!" if album_dropped else "Kanye has not dropped Vultures."
+    )
 
 
 async def main():
     while True:
         response = await fetch(SPOTIFY_URL)
         soup = BeautifulSoup(response, "html.parser")
-        log_check(lambda: check_for_album(soup))
+        album_dropped = check_for_album(soup)
+        log_result(album_dropped)
+        if album_dropped:
+            post_to_discord()
         await sleep(5)
 
 
